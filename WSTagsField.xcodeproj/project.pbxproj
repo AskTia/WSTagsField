@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		125AC6EC1F14D13F00137101 /* TextFieldWithTypeAhead.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125AC6EB1F14D13F00137101 /* TextFieldWithTypeAhead.swift */; };
+		125AC6EC1F14D13F00137101 /* WSTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125AC6EB1F14D13F00137101 /* WSTextField.swift */; };
 		125AC6EF1F14D6A600137101 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 125AC6EE1F14D6A600137101 /* Constants.swift */; };
 		D77F81B31D2A957400E6FF3E /* WSTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77F81B01D2A957400E6FF3E /* WSTag.swift */; };
 		D77F81B41D2A957400E6FF3E /* WSTagsField.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77F81B11D2A957400E6FF3E /* WSTagsField.swift */; };
@@ -17,6 +17,7 @@
 		D78C9FFF1D2A6AFD004F4BFF /* WSTagsFieldTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D78C9FFE1D2A6AFD004F4BFF /* WSTagsFieldTests.swift */; };
 		EC5DE0E322B2E56D004D253D /* WSTagsField+UITableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC5DE0E222B2E56D004D253D /* WSTagsField+UITableView.swift */; };
 		EC5DE0E522B30786004D253D /* UIColor+.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC5DE0E422B30786004D253D /* UIColor+.swift */; };
+		EC5DE0E822B41013004D253D /* WSTagsField+UITextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC5DE0E722B41013004D253D /* WSTagsField+UITextField.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -30,7 +31,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		125AC6EB1F14D13F00137101 /* TextFieldWithTypeAhead.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = TextFieldWithTypeAhead.swift; path = Source/TextFieldWithTypeAhead.swift; sourceTree = SOURCE_ROOT; };
+		125AC6EB1F14D13F00137101 /* WSTextField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = WSTextField.swift; path = Source/WSTextField.swift; sourceTree = SOURCE_ROOT; };
 		125AC6EE1F14D6A600137101 /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Constants.swift; path = Source/Constants.swift; sourceTree = SOURCE_ROOT; };
 		D77F81B01D2A957400E6FF3E /* WSTag.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = WSTag.swift; path = Source/WSTag.swift; sourceTree = SOURCE_ROOT; };
 		D77F81B11D2A957400E6FF3E /* WSTagsField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = WSTagsField.swift; path = Source/WSTagsField.swift; sourceTree = SOURCE_ROOT; };
@@ -43,6 +44,7 @@
 		D78CA0001D2A6AFD004F4BFF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		EC5DE0E222B2E56D004D253D /* WSTagsField+UITableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WSTagsField+UITableView.swift"; sourceTree = "<group>"; };
 		EC5DE0E422B30786004D253D /* UIColor+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+.swift"; sourceTree = "<group>"; };
+		EC5DE0E722B41013004D253D /* WSTagsField+UITextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WSTagsField+UITextField.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,9 +92,10 @@
 				D77F81B01D2A957400E6FF3E /* WSTag.swift */,
 				D78C9FF21D2A6AFD004F4BFF /* WSTagsField.h */,
 				D77F81B11D2A957400E6FF3E /* WSTagsField.swift */,
+				EC5DE0E722B41013004D253D /* WSTagsField+UITextField.swift */,
 				EC5DE0E222B2E56D004D253D /* WSTagsField+UITableView.swift */,
 				D77F81B21D2A957400E6FF3E /* WSTagView.swift */,
-				125AC6EB1F14D13F00137101 /* TextFieldWithTypeAhead.swift */,
+				125AC6EB1F14D13F00137101 /* WSTextField.swift */,
 				EC5DE0E422B30786004D253D /* UIColor+.swift */,
 			);
 			path = WSTagsField;
@@ -240,9 +243,10 @@
 				D77F81B31D2A957400E6FF3E /* WSTag.swift in Sources */,
 				D77F81B41D2A957400E6FF3E /* WSTagsField.swift in Sources */,
 				D77F81B51D2A957400E6FF3E /* WSTagView.swift in Sources */,
-				125AC6EC1F14D13F00137101 /* TextFieldWithTypeAhead.swift in Sources */,
+				125AC6EC1F14D13F00137101 /* WSTextField.swift in Sources */,
 				EC5DE0E322B2E56D004D253D /* WSTagsField+UITableView.swift in Sources */,
 				EC5DE0E522B30786004D253D /* UIColor+.swift in Sources */,
+				EC5DE0E822B41013004D253D /* WSTagsField+UITextField.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

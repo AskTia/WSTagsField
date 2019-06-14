@@ -33,12 +33,20 @@ open class WSTagsField: UIScrollView {
         return nil
     }
 
-    fileprivate let textField = TextFieldWithTypeahead()
+    // MARK: - Typeahead
+
+    var typeaheadData: [(String, String)] = [] {
+        didSet {
+            dataChanged()
+        }
+    }
+
+    fileprivate let textField = WSTextField()
 
     var onTypeaheadDataSelected: (((String, String)) -> Void)?
 
     /// Dedicated text field delegate.
-    open weak var textDelegate: UITextFieldDelegate?
+    open weak var textFieldDelegate: UITextFieldDelegate?
 
     /// Background color for tag view in normal (non-selected) state.
     open override var tintColor: UIColor! {
@@ -686,8 +694,8 @@ extension WSTagsField {
     private func dataChanged() {
         DispatchQueue.main.async {
             self.tableView.reloadData()
-//            var tableHeight = CGFloat(self.typeaheadData.count) * TextFieldWithTypeahead.rowHeight
-//            tableHeight = min(tableHeight, TextFieldWithTypeahead.maxHeight)
+//            var tableHeight = CGFloat(self.typeaheadData.count) * WSTextField.rowHeight
+//            tableHeight = min(tableHeight, WSTextField.maxHeight)
 //            self.tableView.frame = CGRect(x: 0,
 //                                          y: self.frame.height,
 //                                          width: self.frame.width,
@@ -831,52 +839,6 @@ extension WSTagsField {
             return CGFloat.infinity
         }
         return contentInset.top + contentInset.bottom + Constants.STANDARD_ROW_HEIGHT * CGFloat(numberOfLines) + spaceBetweenLines * CGFloat(numberOfLines - 1)
-    }
-
-}
-
-// MARK: - UITextFieldDelegate
-extension WSTagsField: UITextFieldDelegate {
-
-    public func textFieldDidBeginEditing(_ textField: UITextField) {
-        textDelegate?.textFieldDidBeginEditing?(textField)
-        unselectAllTagViewsAnimated(true)
-    }
-
-    public func textFieldDidEndEditing(_ textField: UITextField) {
-        textDelegate?.textFieldDidEndEditing?(textField)
-//        typeaheadData = []
-    }
-
-    public func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        if acceptTagOption == .return && onShouldAcceptTag?(self) ?? true {
-            tokenizeTextFieldText()
-            return true
-        }
-
-        if let textFieldShouldReturn = textDelegate?.textFieldShouldReturn,
-            textFieldShouldReturn(textField) {
-            tokenizeTextFieldText()
-            return true
-        }
-
-        return false
-    }
-
-    public func textField(_ textField: UITextField,
-                          shouldChangeCharactersIn range: NSRange,
-                          replacementString string: String) -> Bool {
-        if acceptTagOption == .comma && string == "," && onShouldAcceptTag?(self) ?? true {
-            tokenizeTextFieldText()
-            return false
-        }
-
-        if acceptTagOption == .space && string == " " && onShouldAcceptTag?(self) ?? true {
-            tokenizeTextFieldText()
-            return false
-        }
-
-        return true
     }
 
 }

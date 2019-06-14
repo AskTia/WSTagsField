@@ -37,7 +37,7 @@ class ViewController: UIViewController {
         tagsField.delimiter = ""
         tagsField.keyboardAppearance = .dark
 
-        tagsField.textDelegate = self
+        tagsField.textFieldDelegate = self
         tagsField.acceptTagOption = .space
 
         textFieldEvents()
