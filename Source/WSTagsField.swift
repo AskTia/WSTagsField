@@ -15,7 +15,27 @@ public enum WSTagAcceptOption {
 }
 
 open class WSTagsField: UIScrollView {
-    fileprivate let textField = BackspaceDetectingTextField()
+
+    // MARK: - Allow interaction outside of the textfield (typeahead table).
+    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard isUserInteractionEnabled, !isHidden, alpha > 0 else {
+            return nil
+        }
+
+        print(subviews)
+        for subview in subviews.reversed() {
+            let convertedPoint = subview.convert(point, from: self)
+            if let hitView = subview.hitTest(convertedPoint, with: event) {
+                return hitView
+            }
+        }
+
+        return nil
+    }
+
+    fileprivate let textField = TextFieldWithTypeahead()
+
+    var onTypeaheadDataSelected: (((String, String)) -> Void)?
 
     /// Dedicated text field delegate.
     open weak var textDelegate: UITextFieldDelegate?
@@ -54,9 +74,6 @@ open class WSTagsField: UIScrollView {
         }
     }
 
-    @available(*, unavailable, message: "Use 'isDelimiterVisible' instead.")
-    open var displayDelimiter: Bool = false
-
     open var isDelimiterVisible: Bool = false {
         didSet {
             tagViews.forEach { $0.displayDelimiter = self.isDelimiterVisible ? self.delimiter : "" }
@@ -78,9 +95,6 @@ open class WSTagsField: UIScrollView {
 
     /// Whether or not the WSTagsField should become scrollable
     open var enableScrolling: Bool = true
-
-    @available(*, unavailable, message: "Use 'cornerRadius' instead.")
-    open var tagCornerRadius: CGFloat = 3.0
 
     open var cornerRadius: CGFloat = 3.0 {
         didSet {
@@ -134,9 +148,6 @@ open class WSTagsField: UIScrollView {
         }
     }
 
-    @available(*, unavailable, message: "Use 'placeholderAlwaysVisible' instead.")
-    open var placeholderAlwayVisible: Bool = false
-
     open var placeholderAlwaysVisible: Bool = false {
         didSet {
             updatePlaceholderTextVisibility()
@@ -167,9 +178,6 @@ open class WSTagsField: UIScrollView {
 
     /// By default, the return key is used to create a tag in the field. You can change it, i.e., to use comma or space key instead.
     open var acceptTagOption: WSTagAcceptOption = .return
-
-    @available(*, unavailable, message: "Use 'contentInset' instead.")
-    open var padding: UIEdgeInsets = UIEdgeInsets.zero
 
     open override var contentInset: UIEdgeInsets {
         didSet {
@@ -284,15 +292,104 @@ open class WSTagsField: UIScrollView {
         return .init(width: size.width, height: calculateContentHeight(layoutWidth: size.width) + contentInset.top + contentInset.bottom)
     }
 
-    // MARK: -
+    // MARK: - Table View
+
+    /// `UITableView` to show the dropdown typeahead options.
+    lazy var tableView: UITableView = {
+        let tableView = UITableView()
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.separatorStyle = .none
+        tableView.tableFooterView = UIView()
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
+        return tableView
+    }()
+
+//    let rowHeight: CGFloat = 44
+//    let maxHeight: CGFloat = 400
+
+    // List of elements to be shown in the autocomplete view
+    var typeaheadData: [(String, String)] = [
+        ("TEST1", "TEST1"),
+        ("TEST2", "TEST2"),
+        ("TEST3", "TEST3"),
+        ("TEST4", "TEST4"),
+        ("TEST5", "TEST5"),
+        ("TEST6", "TEST6"),
+        ("TEST7", "TEST7"),
+        ("TEST8", "TEST8"),
+        ("TEST9", "TEST9"),
+        ("TEST10", "TEST10"),
+        ("TEST11", "TEST11"),
+        ("TEST12", "TEST12"),
+        ("TEST13", "TEST13"),
+        ("TEST14", "TEST14"),
+        ("TEST15", "TEST15"),
+        ("TEST16", "TEST16"),
+        ("TEST17", "TEST17"),
+        ("TEST18", "TEST18"),
+        ("TEST19", "TEST19"),
+        ("TEST20", "TEST20")
+    ]
+    //    {
+    //        didSet {
+    //            dataChanged()
+    //        }
+    //    }
+
+    // MARK: - Initialization
+
     public override init(frame: CGRect) {
         super.init(frame: frame)
-        internalInit()
+        commonInit()
     }
 
     public required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-        internalInit()
+        commonInit()
+    }
+
+    private func commonInit() {
+        isScrollEnabled = false
+        showsHorizontalScrollIndicator = false
+
+//        bringSubviewToFront(textField.tableView)
+//        superview?.bringSubviewToFront(self.tableView)
+
+        addSubview(tableView)
+
+        textColor = .white
+        selectedColor = .gray
+        selectedTextColor = .black
+
+        clipsToBounds = false
+
+        textField.font = font
+        textField.autocapitalizationType = .none
+        textField.spellCheckingType = .no
+        textField.delegate = self
+        textField.textColor = fieldTextColor
+        addSubview(textField)
+
+        layerBoundsObserver = self.observe(\.layer.bounds, options: [.old, .new]) { [weak self] sender, change in
+            guard change.oldValue?.size.width != change.newValue?.size.width else {
+                return
+            }
+            self?.repositionViews()
+        }
+
+        textField.onDeleteBackwards = { [weak self] in
+            if self?.readOnly ?? true { return }
+
+            if self?.textField.text?.isEmpty ?? true, let tagView = self?.tagViews.last {
+                self?.selectTagView(tagView, animated: true)
+                self?.textField.resignFirstResponder()
+            }
+        }
+
+        textField.addTarget(self, action: #selector(onTextFieldDidChange(_:)), for: UIControl.Event.editingChanged)
+
+        repositionViews()
     }
 
     deinit {
@@ -317,6 +414,9 @@ open class WSTagsField: UIScrollView {
     open override func layoutSubviews() {
         super.layoutSubviews()
         repositionViews()
+
+        tableView.frame = CGRect(x: 0, y: frame.height, width: frame.width, height: 300)
+        bringSubviewToFront(tableView)
     }
 
     /// Take the text inside of the field and make it a Tag.
@@ -348,17 +448,17 @@ open class WSTagsField: UIScrollView {
     }
 
     // MARK: - Adding / Removing Tags
-    open func addTags(_ tags: [String]) {
-        tags.forEach { addTag($0) }
-    }
+//    open func addTags(_ tags: [String]) {
+//        tags.forEach { addTag($0) }
+//    }
 
     open func addTags(_ tags: [WSTag]) {
         tags.forEach { addTag($0) }
     }
 
-    open func addTag(_ tag: String) {
-        addTag(WSTag(tag))
-    }
+//    open func addTag(_ tag: String) {
+//        addTag(WSTag(tag))
+//    }
 
     open func addTag(_ tag: WSTag) {
         if let onValidateTag = onValidateTag, !onValidateTag(tag, self.tags) {
@@ -421,9 +521,9 @@ open class WSTagsField: UIScrollView {
         repositionViews()
     }
 
-    open func removeTag(_ tag: String) {
-        removeTag(WSTag(tag))
-    }
+//    open func removeTag(_ tag: String) {
+//        removeTag(WSTag(tag))
+//    }
 
     open func removeTag(_ tag: WSTag) {
         if let index = self.tags.firstIndex(of: tag) {
@@ -452,16 +552,17 @@ open class WSTagsField: UIScrollView {
 
     @discardableResult
     open func tokenizeTextFieldText() -> WSTag? {
-        let text = self.textField.text?.trimmingCharacters(in: CharacterSet.whitespaces) ?? ""
+        let text = textField.text?.trimmingCharacters(in: CharacterSet.whitespaces) ?? ""
+
         if text.isEmpty == false && (onVerifyTag?(self, text) ?? true) {
-            let tag = WSTag(text)
+            let tag = WSTag(text: text, value: nil)
             addTag(tag)
 
-            self.textField.text = ""
-            onTextFieldDidChange(self.textField)
-
+            textField.text = ""
+            onTextFieldDidChange(textField)
             return tag
         }
+
         return nil
     }
 
@@ -569,11 +670,6 @@ extension WSTagsField {
         set { textField.text = newValue }
     }
 
-    @available(*, deprecated, message: "Use 'inputFieldAccessoryView' instead")
-    override open var inputAccessoryView: UIView? {
-        return super.inputAccessoryView
-    }
-
     open var inputFieldAccessoryView: UIView? {
         get { return textField.inputAccessoryView }
         set { textField.inputAccessoryView = newValue }
@@ -585,45 +681,22 @@ extension WSTagsField {
 
 extension WSTagsField {
 
-    fileprivate func internalInit() {
-        self.isScrollEnabled = false
-        self.showsHorizontalScrollIndicator = false
-
-        textColor = .white
-        selectedColor = .gray
-        selectedTextColor = .black
-
-        clipsToBounds = true
-
-        textField.backgroundColor = .clear
-        textField.autocorrectionType = UITextAutocorrectionType.no
-        textField.autocapitalizationType = UITextAutocapitalizationType.none
-        textField.spellCheckingType = .no
-        textField.delegate = self
-        textField.font = font
-        textField.textColor = fieldTextColor
-        addSubview(textField)
-
-        layerBoundsObserver = self.observe(\.layer.bounds, options: [.old, .new]) { [weak self] sender, change in
-            guard change.oldValue?.size.width != change.newValue?.size.width else {
-                return
-            }
-            self?.repositionViews()
+    /// Called when the typeaheadData is set.
+    /// Updates the tableview frame and reloads the data.
+    private func dataChanged() {
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+//            var tableHeight = CGFloat(self.typeaheadData.count) * TextFieldWithTypeahead.rowHeight
+//            tableHeight = min(tableHeight, TextFieldWithTypeahead.maxHeight)
+//            self.tableView.frame = CGRect(x: 0,
+//                                          y: self.frame.height,
+//                                          width: self.frame.width,
+//                                          height: tableHeight)
+//            self.superview?.bringSubviewToFront(self.tableView)
         }
-
-        textField.onDeleteBackwards = { [weak self] in
-            if self?.readOnly ?? true { return }
-
-            if self?.textField.text?.isEmpty ?? true, let tagView = self?.tagViews.last {
-                self?.selectTagView(tagView, animated: true)
-                self?.textField.resignFirstResponder()
-            }
-        }
-
-        textField.addTarget(self, action: #selector(onTextFieldDidChange(_:)), for: UIControl.Event.editingChanged)
-
-        repositionViews()
     }
+
+
 
     fileprivate func calculateContentHeight(layoutWidth: CGFloat) -> CGFloat {
         var totalRect: CGRect = .null
@@ -762,6 +835,7 @@ extension WSTagsField {
 
 }
 
+// MARK: - UITextFieldDelegate
 extension WSTagsField: UITextFieldDelegate {
 
     public func textFieldDidBeginEditing(_ textField: UITextField) {
@@ -771,6 +845,7 @@ extension WSTagsField: UITextFieldDelegate {
 
     public func textFieldDidEndEditing(_ textField: UITextField) {
         textDelegate?.textFieldDidEndEditing?(textField)
+//        typeaheadData = []
     }
 
     public func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -778,22 +853,29 @@ extension WSTagsField: UITextFieldDelegate {
             tokenizeTextFieldText()
             return true
         }
-        if let textFieldShouldReturn = textDelegate?.textFieldShouldReturn, textFieldShouldReturn(textField) {
+
+        if let textFieldShouldReturn = textDelegate?.textFieldShouldReturn,
+            textFieldShouldReturn(textField) {
             tokenizeTextFieldText()
             return true
         }
+
         return false
     }
 
-    public func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+    public func textField(_ textField: UITextField,
+                          shouldChangeCharactersIn range: NSRange,
+                          replacementString string: String) -> Bool {
         if acceptTagOption == .comma && string == "," && onShouldAcceptTag?(self) ?? true {
             tokenizeTextFieldText()
             return false
         }
+
         if acceptTagOption == .space && string == " " && onShouldAcceptTag?(self) ?? true {
             tokenizeTextFieldText()
             return false
         }
+
         return true
     }
 

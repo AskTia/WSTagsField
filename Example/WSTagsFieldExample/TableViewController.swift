@@ -63,12 +63,12 @@ class TagsViewCell: UITableViewCell {
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        tagsField.addTag("alksjlkasd")
-        tagsField.addTag("alksjlkasd1")
-        tagsField.addTag("alksjlkasd2")
-        tagsField.addTag("alksjlkasd3")
-        tagsField.addTag("alksjlkasd4")
-        tagsField.addTag("alksjlkasdsds5")
+//        tagsField.addTag("alksjlkasd")
+//        tagsField.addTag("alksjlkasd1")
+//        tagsField.addTag("alksjlkasd2")
+//        tagsField.addTag("alksjlkasd3")
+//        tagsField.addTag("alksjlkasd4")
+//        tagsField.addTag("alksjlkasdsds5")
 
         tagsField.placeholderAlwaysVisible = true
         tagsField.backgroundColor = .lightGray

@@ -33,24 +33,19 @@ class ViewController: UIViewController {
 
         tagsField.layoutMargins = UIEdgeInsets(top: 2, left: 6, bottom: 2, right: 6)
         tagsField.contentInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10) //old padding
-
-        tagsField.placeholder = "Enter a tag"
-        tagsField.placeholderColor = .red
-        tagsField.placeholderAlwaysVisible = true
-        tagsField.backgroundColor = .lightGray
         tagsField.returnKeyType = .next
         tagsField.delimiter = ""
         tagsField.keyboardAppearance = .dark
 
         tagsField.textDelegate = self
-        //tagsField.acceptTagOption = .space
+        tagsField.acceptTagOption = .space
 
         textFieldEvents()
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        tagsField.beginEditing()
+//        tagsField.beginEditing()
     }
 
     override func viewDidLayoutSubviews() {
@@ -84,10 +79,14 @@ class ViewController: UIViewController {
     }
 
     @IBAction func touchAddRandomTags(_ sender: UIButton) {
-        tagsField.addTag(NSUUID().uuidString)
-        tagsField.addTag(NSUUID().uuidString)
-        tagsField.addTag(NSUUID().uuidString)
-        tagsField.addTag(NSUUID().uuidString)
+        tagsField.addTag(WSTag(text: "HELLO1"))
+        tagsField.addTag(WSTag(text: "HELLO2"))
+        tagsField.addTag(WSTag(text: "HELLO3"))
+        tagsField.addTag(WSTag(text: "HELLO4"))
+//        tagsField.addTag(NSUUID().uuidString)
+//        tagsField.addTag(NSUUID().uuidString)
+//        tagsField.addTag(NSUUID().uuidString)
+//        tagsField.addTag(NSUUID().uuidString)
     }
 
     @IBAction func touchTableView(_ sender: UIButton) {
