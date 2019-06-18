@@ -7,59 +7,19 @@
 //
 
 import Foundation
-import UIKit
 
-class WSTextField: UITextField {
-
-    // MARK: - Properties
-
-//    /// Closure called when editing changed on text field.
-//    var onTextFieldEditingChanged: ((String?) -> Void)?
+public class WSTextField: UITextField {
 
     /// Closure called when character is deleted from displayed text.
-    var onDeleteBackwards: (() -> Void)?
+    public var onDeleteBackwards: (() -> Void)?
 
-    // MARK: - Initialization
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-//        commonInit()
-    }
-
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-//        commonInit()
-    }
-
-//    private func commonInit() {
-//        addTarget(self, action: #selector(handleTextFieldEditingChanged), for: .editingChanged)
-//    }
-
-    // MARK: - Overrides
-
-    override func deleteBackward() {
+    public override func deleteBackward() {
         onDeleteBackwards?()
         super.deleteBackward()
     }
 
-    // MARK: - Handlers
-
-//    @objc func handleTextFieldEditingChanged() {
-//        // Tokenize by csv and ensure there is data
-//        guard let stringArray = text?.components(separatedBy: ","),
-//            let unwrappedText = stringArray.last,
-//            unwrappedText.count > 0,
-//            unwrappedText != "" else {
-////                typeaheadData = []
-//                onTextFieldEditingChanged?(nil)
-//                return
-//        }
-//        // Why does this only get the end of the string?
-//        // Because if there's a comma that kinda of signifies its a different string?
-//        // This sends it back up the chain because it needs to update the table view
-//        // typeahead list.
-//        // Generally the code to update the typeaheadList data is expected here.
-//        onTextFieldEditingChanged?(unwrappedText)
-//    }
+    public override var canBecomeFirstResponder: Bool {
+        return true
+    }
 
 }

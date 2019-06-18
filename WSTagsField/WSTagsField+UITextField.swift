@@ -7,18 +7,26 @@
 //
 
 import Foundation
+import UIKit
 
 // MARK: - UITextFieldDelegate
 extension WSTagsField: UITextFieldDelegate {
 
     public func textFieldDidBeginEditing(_ textField: UITextField) {
         textFieldDelegate?.textFieldDidBeginEditing?(textField)
+
         unselectAllTagViewsAnimated(true)
+
+        tableView.isHidden = false
+        superview?.bringSubviewToFront(tableView)
+
+//        tableView.frame = CGRect(x: 0, y: frame.height, width: frame.width, height: 300)
     }
 
     public func textFieldDidEndEditing(_ textField: UITextField) {
         textFieldDelegate?.textFieldDidEndEditing?(textField)
         //        typeaheadData = []
+        tableView.isHidden = true
     }
 
     public func textFieldShouldReturn(_ textField: UITextField) -> Bool {

@@ -58,7 +58,7 @@ open class WSTagView: UIView {
     }
 
     /// Background color to be used for selected state.
-    open var selectedColor: UIColor? {
+    open var selectedColor: UIColor? = .gray {
         didSet { updateContent(animated: false) }
     }
 

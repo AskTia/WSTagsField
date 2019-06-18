@@ -14,36 +14,52 @@ public enum WSTagAcceptOption {
     case space
 }
 
+public protocol TagFieldDisplayable {
+    var displayString: String? { get set }
+    func dataSelected(text: Any)
+}
+
 open class WSTagsField: UIScrollView {
 
-    // MARK: - Allow interaction outside of the textfield (typeahead table).
-    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        guard isUserInteractionEnabled, !isHidden, alpha > 0 else {
-            return nil
-        }
-
-        print(subviews)
-        for subview in subviews.reversed() {
-            let convertedPoint = subview.convert(point, from: self)
-            if let hitView = subview.hitTest(convertedPoint, with: event) {
-                return hitView
-            }
-        }
-
-        return nil
-    }
+//    // MARK: - Allow interaction outside of the textfield (typeahead table).
+//    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+//        guard isUserInteractionEnabled, !isHidden, alpha > 0 else {
+//            return nil
+//        }
+//
+//        for subview in subviews {
+//            let convertedPoint = subview.convert(point, from: self)
+//            if let hitView = subview.hitTest(convertedPoint, with: event) {
+//                return hitView
+//            }
+//        }
+//
+//        return nil
+//    }
 
     // MARK: - Typeahead
 
-    var typeaheadData: [(String, String)] = [] {
+    // List of elements to be shown in the autocomplete view
+    public var typeaheadData: [Any] = [] {
         didSet {
             dataChanged()
         }
     }
 
-    fileprivate let textField = WSTextField()
+    public var delegato: TagFieldDisplayable?
 
-    var onTypeaheadDataSelected: (((String, String)) -> Void)?
+    public var textFieldText: String? {
+        get {
+            return textField.text
+        }
+        set {
+            textField.text = newValue
+        }
+    }
+
+    public let textField = WSTextField()
+
+    var onTypeaheadDataSelected: ((Any) -> Void)?
 
     /// Dedicated text field delegate.
     open weak var textFieldDelegate: UITextFieldDelegate?
@@ -56,7 +72,7 @@ open class WSTagsField: UIScrollView {
     }
 
     /// Text color for tag view in normal (non-selected) state.
-    open var textColor: UIColor? {
+    open var textColor: UIColor? = .white {
         didSet {
             tagViews.forEach { $0.textColor = self.textColor }
         }
@@ -70,7 +86,7 @@ open class WSTagsField: UIScrollView {
     }
 
     /// Text color for tag view in normal (selected) state.
-    open var selectedTextColor: UIColor? {
+    open var selectedTextColor: UIColor? = .black{
         didSet {
             tagViews.forEach { $0.selectedTextColor = self.selectedTextColor }
         }
@@ -302,48 +318,16 @@ open class WSTagsField: UIScrollView {
 
     // MARK: - Table View
 
+    //    let rowHeight: CGFloat = 44
+    //    let maxHeight: CGFloat = 400
+
     /// `UITableView` to show the dropdown typeahead options.
-    lazy var tableView: UITableView = {
-        let tableView = UITableView()
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.separatorStyle = .none
-        tableView.tableFooterView = UIView()
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
-        return tableView
-    }()
+    lazy var tableView = UITableView()
 
-//    let rowHeight: CGFloat = 44
-//    let maxHeight: CGFloat = 400
-
-    // List of elements to be shown in the autocomplete view
-    var typeaheadData: [(String, String)] = [
-        ("TEST1", "TEST1"),
-        ("TEST2", "TEST2"),
-        ("TEST3", "TEST3"),
-        ("TEST4", "TEST4"),
-        ("TEST5", "TEST5"),
-        ("TEST6", "TEST6"),
-        ("TEST7", "TEST7"),
-        ("TEST8", "TEST8"),
-        ("TEST9", "TEST9"),
-        ("TEST10", "TEST10"),
-        ("TEST11", "TEST11"),
-        ("TEST12", "TEST12"),
-        ("TEST13", "TEST13"),
-        ("TEST14", "TEST14"),
-        ("TEST15", "TEST15"),
-        ("TEST16", "TEST16"),
-        ("TEST17", "TEST17"),
-        ("TEST18", "TEST18"),
-        ("TEST19", "TEST19"),
-        ("TEST20", "TEST20")
-    ]
-    //    {
-    //        didSet {
-    //            dataChanged()
-    //        }
-    //    }
+    public func hideTypeahead() {
+        tableView.isHidden = true
+        tableView.frame = .zero
+    }
 
     // MARK: - Initialization
 
@@ -358,25 +342,31 @@ open class WSTagsField: UIScrollView {
     }
 
     private func commonInit() {
+        clipsToBounds = false
         isScrollEnabled = false
         showsHorizontalScrollIndicator = false
 
-//        bringSubviewToFront(textField.tableView)
-//        superview?.bringSubviewToFront(self.tableView)
-
+        tableView.dataSource = self
+        tableView.delegate = self
+        tableView.tableFooterView = UIView()
+        tableView.isHidden = true
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
         addSubview(tableView)
 
-        textColor = .white
-        selectedColor = .gray
-        selectedTextColor = .black
-
-        clipsToBounds = false
-
         textField.font = font
+        textField.textColor = fieldTextColor
         textField.autocapitalizationType = .none
         textField.spellCheckingType = .no
         textField.delegate = self
-        textField.textColor = fieldTextColor
+        textField.addTarget(self, action: #selector(onTextFieldDidChange), for: .editingChanged)
+        textField.onDeleteBackwards = { [weak self] in
+            if self?.readOnly ?? true { return }
+
+            if self?.textField.text?.isEmpty ?? true, let tagView = self?.tagViews.last {
+                self?.selectTagView(tagView, animated: true)
+                self?.textField.resignFirstResponder()
+            }
+        }
         addSubview(textField)
 
         layerBoundsObserver = self.observe(\.layer.bounds, options: [.old, .new]) { [weak self] sender, change in
@@ -386,16 +376,13 @@ open class WSTagsField: UIScrollView {
             self?.repositionViews()
         }
 
-        textField.onDeleteBackwards = { [weak self] in
-            if self?.readOnly ?? true { return }
+        onTypeaheadDataSelected = { [weak self] selectedData in
+            guard let data = selectedData as? TagFieldDisplayable else { return }
 
-            if self?.textField.text?.isEmpty ?? true, let tagView = self?.tagViews.last {
-                self?.selectTagView(tagView, animated: true)
-                self?.textField.resignFirstResponder()
+            if let text = data.displayString {
+                self?.addTag(WSTag(text: text))
             }
         }
-
-        textField.addTarget(self, action: #selector(onTextFieldDidChange(_:)), for: UIControl.Event.editingChanged)
 
         repositionViews()
     }
@@ -422,9 +409,6 @@ open class WSTagsField: UIScrollView {
     open override func layoutSubviews() {
         super.layoutSubviews()
         repositionViews()
-
-        tableView.frame = CGRect(x: 0, y: frame.height, width: frame.width, height: 300)
-        bringSubviewToFront(tableView)
     }
 
     /// Take the text inside of the field and make it a Tag.
@@ -440,15 +424,15 @@ open class WSTagsField: UIScrollView {
     }
 
     open func beginEditing() {
-        self.textField.becomeFirstResponder()
-        self.unselectAllTagViewsAnimated(false)
+        textField.becomeFirstResponder()
+        unselectAllTagViewsAnimated(false)
     }
 
     open func endEditing() {
         // NOTE: We used to check if .isFirstResponder and then resign first responder, but sometimes we noticed 
         // that it would be the first responder, but still return isFirstResponder=NO. 
         // So always attempt to resign without checking.
-        self.textField.resignFirstResponder()
+        textField.resignFirstResponder()
     }
 
     open override func reloadInputViews() {
@@ -577,6 +561,22 @@ open class WSTagsField: UIScrollView {
     // MARK: - Actions
 
     @objc open func onTextFieldDidChange(_ sender: AnyObject) {
+        // Tokenize by csv and ensure there is data
+        guard let stringArray = text?.components(separatedBy: ","),
+            let unwrappedText = stringArray.last,
+            unwrappedText.count > 0,
+            unwrappedText != "" else {
+                //                typeaheadData = []
+                onDidChangeText?(self, nil)
+                return
+        }
+        // Why does this only get the end of the string?
+        // Because if there's a comma that kinda of signifies its a different string?
+        // This sends it back up the chain because it needs to update the table view
+        // typeahead list.
+        // Generally the code to update the typeaheadList data is expected here.
+//        onTextFieldEditingChanged?(unwrappedText)
+
         onDidChangeText?(self, textField.text)
     }
 
@@ -692,19 +692,20 @@ extension WSTagsField {
     /// Called when the typeaheadData is set.
     /// Updates the tableview frame and reloads the data.
     private func dataChanged() {
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-//            var tableHeight = CGFloat(self.typeaheadData.count) * WSTextField.rowHeight
-//            tableHeight = min(tableHeight, WSTextField.maxHeight)
+//        DispatchQueue.main.async {
+//            self.tableView.reloadData()
+//
+//            var tableHeight = CGFloat(self.typeaheadData.count) * 44.0
+//            tableHeight = min(tableHeight, 400)
+//
 //            self.tableView.frame = CGRect(x: 0,
 //                                          y: self.frame.height,
 //                                          width: self.frame.width,
 //                                          height: tableHeight)
+//
 //            self.superview?.bringSubviewToFront(self.tableView)
-        }
+//        }
     }
-
-
 
     fileprivate func calculateContentHeight(layoutWidth: CGFloat) -> CGFloat {
         var totalRect: CGRect = .null

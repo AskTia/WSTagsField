@@ -1,6 +1,6 @@
 //
 //  WSTagsField+UITableView.swift
-//  WSTagsField
+//  Tia
 //
 //  Created by Damian Cesar on 6/13/19.
 //  Copyright © 2019 Tia. All rights reserved.
@@ -11,15 +11,20 @@ import Foundation
 // MARK: - UITableViewDataSource
 extension WSTagsField: UITableViewDataSource {
 
-    public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    public func tableView(_ tableView: UITableView,
+                          numberOfRowsInSection section: Int) -> Int {
         return typeaheadData.count
     }
 
-    public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        let data = typeaheadData[indexPath.row]
+    public func tableView(_ tableView: UITableView,
+                          cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let data = typeaheadData[indexPath.row] as? TagFieldDisplayable else {
+            fatalError("Cell must conform to protocol '\(String(describing: TagFieldDisplayable.self))'.")
+        }
 
-        cell.textLabel?.text = data.0
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+
+        cell.textLabel?.text = data.displayString
         cell.textLabel?.font = UIFont(name: "GTWalsheimRegular", size: 17)
 
         if indexPath.row.isMultiple(of: 2) {
@@ -36,9 +41,10 @@ extension WSTagsField: UITableViewDataSource {
 // MARK: - UITableViewDelegate
 extension WSTagsField: UITableViewDelegate {
 
-    public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let data = typeaheadData[indexPath.row]
-        onTypeaheadDataSelected?(data)
+    public func tableView(_ tableView: UITableView,
+                          didSelectRowAt indexPath: IndexPath) {
+        let selectedData = typeaheadData[indexPath.row]
+        onTypeaheadDataSelected?(selectedData)
         typeaheadData = []
     }
 
