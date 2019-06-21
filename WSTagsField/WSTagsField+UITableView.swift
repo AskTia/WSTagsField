@@ -44,6 +44,13 @@ extension WSTagsField: UITableViewDelegate {
     public func tableView(_ tableView: UITableView,
                           didSelectRowAt indexPath: IndexPath) {
         let selectedData = typeaheadData[indexPath.row]
+
+        guard let data = selectedData as? TagFieldDisplayable else { return }
+
+        if let text = data.displayString {
+            addTag(WSTag(text: text))
+        }
+
         onTypeaheadDataSelected?(selectedData)
         typeaheadData = []
     }

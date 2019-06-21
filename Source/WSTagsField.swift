@@ -21,21 +21,21 @@ public protocol TagFieldDisplayable {
 
 open class WSTagsField: UIScrollView {
 
-//    // MARK: - Allow interaction outside of the textfield (typeahead table).
-//    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-//        guard isUserInteractionEnabled, !isHidden, alpha > 0 else {
-//            return nil
-//        }
-//
-//        for subview in subviews {
-//            let convertedPoint = subview.convert(point, from: self)
-//            if let hitView = subview.hitTest(convertedPoint, with: event) {
-//                return hitView
-//            }
-//        }
-//
-//        return nil
-//    }
+    // MARK: - Allow interaction outside of the textfield (typeahead table).
+    open override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard isUserInteractionEnabled, !isHidden, alpha > 0 else {
+            return nil
+        }
+
+        for subview in subviews {
+            let convertedPoint = subview.convert(point, from: self)
+            if let hitView = subview.hitTest(convertedPoint, with: event) {
+                return hitView
+            }
+        }
+
+        return nil
+    }
 
     // MARK: - Typeahead
 
@@ -48,18 +48,9 @@ open class WSTagsField: UIScrollView {
 
     public var delegato: TagFieldDisplayable?
 
-    public var textFieldText: String? {
-        get {
-            return textField.text
-        }
-        set {
-            textField.text = newValue
-        }
-    }
-
     public let textField = WSTextField()
 
-    var onTypeaheadDataSelected: ((Any) -> Void)?
+    public var onTypeaheadDataSelected: ((Any) -> Void)?
 
     /// Dedicated text field delegate.
     open weak var textFieldDelegate: UITextFieldDelegate?
@@ -234,6 +225,7 @@ open class WSTagsField: UIScrollView {
     }
 
     open fileprivate(set) var tags = [WSTag]()
+
     internal var tagViews = [WSTagView]()
 
     // MARK: - Events
@@ -376,14 +368,6 @@ open class WSTagsField: UIScrollView {
             self?.repositionViews()
         }
 
-        onTypeaheadDataSelected = { [weak self] selectedData in
-            guard let data = selectedData as? TagFieldDisplayable else { return }
-
-            if let text = data.displayString {
-                self?.addTag(WSTag(text: text))
-            }
-        }
-
         repositionViews()
     }
 
@@ -432,6 +416,7 @@ open class WSTagsField: UIScrollView {
         // NOTE: We used to check if .isFirstResponder and then resign first responder, but sometimes we noticed 
         // that it would be the first responder, but still return isFirstResponder=NO. 
         // So always attempt to resign without checking.
+        typeaheadData = []
         textField.resignFirstResponder()
     }
 
@@ -440,17 +425,17 @@ open class WSTagsField: UIScrollView {
     }
 
     // MARK: - Adding / Removing Tags
-//    open func addTags(_ tags: [String]) {
-//        tags.forEach { addTag($0) }
-//    }
+    open func addTags(_ tags: [String]) {
+        tags.forEach { addTag($0) }
+    }
 
     open func addTags(_ tags: [WSTag]) {
         tags.forEach { addTag($0) }
     }
 
-//    open func addTag(_ tag: String) {
-//        addTag(WSTag(tag))
-//    }
+    open func addTag(_ tag: String) {
+        addTag(WSTag(text: tag))
+    }
 
     open func addTag(_ tag: WSTag) {
         if let onValidateTag = onValidateTag, !onValidateTag(tag, self.tags) {
@@ -513,9 +498,9 @@ open class WSTagsField: UIScrollView {
         repositionViews()
     }
 
-//    open func removeTag(_ tag: String) {
-//        removeTag(WSTag(tag))
-//    }
+    open func removeTag(_ tag: String) {
+        removeTag(WSTag(text: tag))
+    }
 
     open func removeTag(_ tag: WSTag) {
         if let index = self.tags.firstIndex(of: tag) {
@@ -678,6 +663,14 @@ extension WSTagsField {
         set { textField.text = newValue }
     }
 
+    public var tagsArray: [String] {
+        guard !tags.isEmpty else { return [] }
+
+        var stringArray: [String] = []
+        tags.forEach { stringArray.append($0.text) }
+        return stringArray
+    }
+
     open var inputFieldAccessoryView: UIView? {
         get { return textField.inputAccessoryView }
         set { textField.inputAccessoryView = newValue }
@@ -692,19 +685,19 @@ extension WSTagsField {
     /// Called when the typeaheadData is set.
     /// Updates the tableview frame and reloads the data.
     private func dataChanged() {
-//        DispatchQueue.main.async {
-//            self.tableView.reloadData()
-//
-//            var tableHeight = CGFloat(self.typeaheadData.count) * 44.0
-//            tableHeight = min(tableHeight, 400)
-//
-//            self.tableView.frame = CGRect(x: 0,
-//                                          y: self.frame.height,
-//                                          width: self.frame.width,
-//                                          height: tableHeight)
-//
-//            self.superview?.bringSubviewToFront(self.tableView)
-//        }
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+
+            var tableHeight = CGFloat(self.typeaheadData.count) * 44.0
+            tableHeight = min(tableHeight, 400)
+
+            self.tableView.frame = CGRect(x: 0,
+                                          y: self.frame.height,
+                                          width: self.frame.width,
+                                          height: tableHeight)
+
+            self.superview?.bringSubviewToFront(self.tableView)
+        }
     }
 
     fileprivate func calculateContentHeight(layoutWidth: CGFloat) -> CGFloat {
