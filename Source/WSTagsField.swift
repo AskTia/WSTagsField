@@ -52,6 +52,8 @@ open class WSTagsField: UIScrollView {
 
     public var onTypeaheadDataSelected: ((Any) -> Void)?
 
+    public var shouldTagOnTypeaheadSelected = true
+
     /// Dedicated text field delegate.
     open weak var textFieldDelegate: UITextFieldDelegate?
 
