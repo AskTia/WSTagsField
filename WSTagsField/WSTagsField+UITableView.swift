@@ -53,7 +53,7 @@ extension WSTagsField: UITableViewDelegate {
             textField.text = data.displayString
         }
 
-        onTypeaheadDataSelected?(selectedData)
+        onTypeaheadDataSelected?(selectedData, shouldTagOnTypeaheadSelected)
         typeaheadData = []
     }
 

@@ -50,7 +50,7 @@ open class WSTagsField: UIScrollView {
 
     public let textField = WSTextField()
 
-    public var onTypeaheadDataSelected: ((Any) -> Void)?
+    public var onTypeaheadDataSelected: ((_ data: Any, _ shouldTagOnTypeAheadSelected: Bool) -> Void)?
 
     public var shouldTagOnTypeaheadSelected = true
 
